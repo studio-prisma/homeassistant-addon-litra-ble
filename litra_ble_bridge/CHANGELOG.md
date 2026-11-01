@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- Protection mode can stay on. `full_access` is replaced by a per-device grant
+  for `/dev/hidraw0`–`/dev/hidraw3`; the Supervisor skips the ones that don't
+  exist and grants a node that appears later through its hot-plug listener.
+
 ## 0.4.1
 
 - Round colour temperature to the nearest 100 K before sending it. The light

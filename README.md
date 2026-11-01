@@ -4,8 +4,8 @@
 > [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). It builds
 > the add-on from the code in this repository instead of fetching it at build
 > time, validates Bluetooth addresses, and recognises a plain Litra Beam over
-> Bluetooth. See `litra_ble_bridge/CHANGELOG.md`. The add-on still needs
-> *Protection mode* off for raw HID access (`full_access`).
+> Bluetooth. See `litra_ble_bridge/CHANGELOG.md`. Raw HID access is granted
+> per device (`/dev/hidraw0`–`3`), so *Protection mode* stays on.
 
 Control **Logitech Litra** lights from Home Assistant — including over
 **Bluetooth**, which Logitech's own software and every existing open-source
