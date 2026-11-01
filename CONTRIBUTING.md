@@ -25,7 +25,7 @@ The Python package lives in `litra_ble_bridge/litra_ble/` so the add-on can buil
 bash tests/run-all.sh
 ```
 
-CI runs the same checks on every push and pull request, on Python 3.9 and 3.12. The aggregating job is called **Gate**. It is the only status check the branch protection requires, and it is green only when every other job is.
+CI runs the same checks on every push and pull request, on Python 3.12 and 3.13. The aggregating job is called **Gate**. It is the only status check the branch protection requires, and it is green only when every other job is.
 
 A red pipeline is not mergeable. If a check fails for a reason unrelated to your change, say so in the PR instead of rerunning until it passes.
 
