@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0
+
+Fork by studio-prisma of [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt) 0.3.2.
+
+- The add-on image is built from the reviewed code in this folder. It no longer
+  runs `pip install git+…@main` at build time, so a rebuild can't pull in
+  unreviewed upstream changes. `paho-mqtt` is pinned to 2.1.0.
+- Bluetooth addresses are validated as MAC addresses before they reach the
+  interactive `bluetoothctl` session; anything else is refused instead of being
+  written to its stdin.
+- Auto-discovery only accepts devices whose advertised name starts with
+  "Litra".
+- A plain Litra Beam over Bluetooth is now recognised by its kernel HID name and
+  driven with the Beam profile. Before, its unknown product id was either
+  skipped or fell back to the Beam LX profile and its wrong feature index.
+- Add-on renamed to "Litra Bluetooth Bridge" (slug `litra_ble_bridge`); the
+  Python package moved into the add-on folder so the local build has it.
+
 ## 0.3.2
 
 - Wait for the kernel hidraw node to appear after bonding (it can lag a few

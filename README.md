@@ -1,5 +1,12 @@
 # Litra Beam LX → Home Assistant (over Bluetooth, via MQTT)
 
+> **Fork.** This is the studio-prisma fork of
+> [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). It builds
+> the add-on from the code in this repository instead of fetching it at build
+> time, validates Bluetooth addresses, and recognises a plain Litra Beam over
+> Bluetooth. See `litra_ble_bridge/CHANGELOG.md`. The add-on still needs
+> *Protection mode* off for raw HID access (`full_access`).
+
 Control **Logitech Litra** lights from Home Assistant — including over
 **Bluetooth**, which Logitech's own software and every existing open-source
 Litra tool don't support. Exposes the Beam LX front light (on/off, brightness,
