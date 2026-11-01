@@ -284,7 +284,9 @@ class LitraLight:
         self.front_brightness_lumen(round(LUMEN_MIN + (LUMEN_MAX - LUMEN_MIN) * pct / 100))
 
     def front_temperature(self, kelvin: int) -> None:
-        k = _clamp(int(kelvin), TEMP_MIN, TEMP_MAX)
+        # The light ignores values that aren't a multiple of 100 K, and Home
+        # Assistant's mired round-trip produces exactly those (2702, 6494, ...).
+        k = _clamp(round(int(kelvin) / 100) * 100, TEMP_MIN, TEMP_MAX)
         self._write(0x11, 0xFF, self._front, 0x9C, (k >> 8) & 0xFF, k & 0xFF)
 
     def get_front_power(self) -> bool | None:

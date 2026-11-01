@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Round colour temperature to the nearest 100 K before sending it. The light
+  ignores other values, and Home Assistant's mired conversion produces them
+  (2702 K, 6494 K), so colour temperature changes had no effect.
+
 ## 0.4.0
 
 Fork by studio-prisma of [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt) 0.3.2.
