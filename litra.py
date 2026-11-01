@@ -7,7 +7,7 @@ Once installed (`pip install .`) you can also just run `litra <cmd>`.
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "litra_ble_bridge"))
 
 from litra_ble.cli import main
 

@@ -1,3 +1,3 @@
-name: Litra Bluetooth add-ons
-url: https://github.com/Alevale/litra-ble-mqtt
-maintainer: Alex Vales
+name: Litra Bluetooth add-ons (studio-prisma)
+url: https://github.com/studio-prisma/homeassistant-addon-litra-ble
+maintainer: studio-prisma
