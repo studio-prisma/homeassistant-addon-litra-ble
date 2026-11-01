@@ -1,0 +1,97 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    # Weekly, Monday 06:00 UTC — catches upstream drift on an unchanged repo.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Compile
+        run: python -m compileall -q litra_ble_bridge/litra_ble litra.py tests
+
+      - name: Shell scripts
+        run: shellcheck --severity=error scripts/install.sh tests/run-all.sh
+
+      - name: Manifests parse
+        run: |
+          pip install pyyaml
+          python - <<'PY'
+          import yaml
+          for path in ("litra_ble_bridge/config.yaml", "litra_ble_bridge/build.yaml", "repository.yaml"):
+              with open(path, encoding="utf-8") as f:
+                  yaml.safe_load(f)
+          PY
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run tests
+        run: |
+          pip install pyyaml
+          bash tests/run-all.sh
+
+  actionlint:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
+
+  # ---------------------------------------------------------------------------
+  # Do not rename. "Gate" is the single required status check in the branch
+  # ruleset of every studio-prisma repo. Add new jobs to `needs`, nothing else.
+  # `if: always()` is mandatory — without it the job is skipped when a dependency
+  # fails, the required context stays pending, and the pull request hangs instead
+  # of turning red.
+  # ---------------------------------------------------------------------------
+  gate:
+    name: Gate
+    runs-on: ubuntu-latest
+    needs: [lint, test, actionlint]
+    if: always()
+    steps:
+      - name: Fail unless every job succeeded
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled') ||
+          contains(needs.*.result, 'skipped')
+        run: |
+          echo "lint=${{ needs.lint.result }}"
+          echo "test=${{ needs.test.result }}"
+          echo "actionlint=${{ needs.actionlint.result }}"
+          exit 1

@@ -12,3 +12,14 @@ venv/
 # Local config / secrets
 *.env
 !litra-mqtt.env.example
+local/
+private/
+
+# Artefacts
+*.zip
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
