@@ -1,0 +1,9 @@
+# Trivy exceptions (read by the central security scan workflow).
+misconfigurations:
+  - id: DS-0002
+    paths:
+      - "litra_ble_bridge/Dockerfile"
+    statement: >-
+      Home Assistant add-on: the Supervisor runs add-on containers as root by
+      design (s6-overlay init, BlueZ/D-Bus access for Bluetooth). Isolation comes
+      from the Supervisor add-on sandbox, not from the container user.
