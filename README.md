@@ -4,12 +4,13 @@
 
 Control Logitech Litra lights (Beam, Beam LX, Glow) from Home Assistant over **Bluetooth**, without Logitech's software and without a cloud. Each light appears as a normal Home Assistant light through MQTT discovery.
 
-This is the studio-prisma fork of [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). It differs in four ways:
+This is the studio-prisma fork of [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). It differs in five ways:
 
 - **A plain Litra Beam works over Bluetooth.** The original only knew its USB id, so the light was either not found or sent the Beam LX command set.
 - **Colour temperature works.** Values are rounded to 100 K; the light ignores anything else.
 - **Protection mode stays on.** Raw HID access is granted per device instead of through full access.
 - **The image is built from this repository.** Nothing is fetched at build time except one pinned dependency, and Bluetooth addresses are validated before they reach `bluetoothctl`.
+- **Nothing is paired by name alone.** Only lights whose address you list are paired and trusted. The original paired any device in range that advertised as `Litra…`, and a trusted Bluetooth HID device can type on the host.
 
 ## Requirements
 
@@ -23,8 +24,9 @@ This is the studio-prisma fork of [Alevale/litra-ble-mqtt](https://github.com/Al
    `https://github.com/studio-prisma/homeassistant-addon-litra-ble`.
 2. Install **Litra Bluetooth Bridge**. Leave Protection mode on.
 3. Remove the light from any other device it is paired with (laptop, phone). A Litra keeps one Bluetooth connection at a time.
-4. Hold the Bluetooth button on the back of the light until it blinks.
-5. Start the add-on. It scans for 20 seconds, pairs the light and publishes it to Home Assistant.
+4. Add the light's Bluetooth address to `lights` in the add-on configuration. If you don't know it, turn on `auto_discover`, put the light in pairing mode and start the add-on once: the log lists the address of every Litra it sees.
+5. Hold the Bluetooth button on the back of the light until it blinks.
+6. Start the add-on. It pairs the listed light and publishes it to Home Assistant.
 
 The light shows up as `light.litra_beam_<suffix>_front` (plus `_back` on a Beam LX). After the first pairing it reconnects on its own.
 
@@ -32,9 +34,10 @@ The light shows up as `light.litra_beam_<suffix>_front` (plus `_back` on a Beam 
 
 | Option | Default | Meaning |
 |---|---|---|
-| `auto_discover` | `true` | Pair any nearby device that advertises as `Litra…` on start. |
-| `lights` | `[]` | Pin addresses, names or models instead of auto-discovery. |
-| `pair_on_start` | `true` | Pair and trust configured or discovered lights on start. |
+| `lights` | `[]` | Addresses (and optionally names, models) of the lights to pair. Only these are paired. |
+| `auto_discover` | `false` | Scan for advertising Litras and log their addresses. Pairs nothing by itself. |
+| `pair_discovered` | `false` | Also pair and trust every discovered `Litra…` device (behaviour before 0.5.0). Keyboards and mice are refused. |
+| `pair_on_start` | `true` | Pair and trust the listed lights on start. |
 | `state_readback` | `false` | Read the light's real state back. Off means Home Assistant shows the last command. |
 | `scan_seconds` | `20` | How long to scan for lights in pairing mode. |
 | `presence_interval` | `5` | Seconds between availability checks. |

@@ -22,51 +22,57 @@ to be within Bluetooth range of the lights.
 - The light must not be connected to another device (laptop, phone) — a Litra
   keeps one Bluetooth connection at a time.
 
-## Setup — the easy way (auto-discovery)
+## Setup
 
-With `auto_discover` on (the default), you don't need to find or type any
-addresses:
+The add-on pairs and trusts only the lights whose address you list. A trusted
+Bluetooth HID device can type on the host's console, and any device in radio
+range can advertise itself as "Litra…", so nothing is paired by name alone.
 
-1. Put each light into pairing mode (hold the Bluetooth button on the back until
-   it blinks). Do this the first time only — once bonded, lights reconnect on
-   their own.
-2. Start the add-on.
+1. Find the light's Bluetooth address. Either read it in the Logitech app or on
+   another device the light was paired with, or turn on `auto_discover`, put the
+   light into pairing mode (hold the Bluetooth button on the back until it
+   blinks) and start the add-on: the log lists every Litra it sees, e.g.
+   `discovered: Litra Beam LX [AA:BB:CC:DD:EE:01]`.
+2. Add the address to `lights`:
 
-On start it scans for advertising **Litra** devices, pairs and trusts anything
-new, then exposes every bonded Litra it finds — with the model (Beam LX / Beam /
-Glow) detected automatically. Each appears in Home Assistant named like
-`Litra Beam LX (EDF4)` (the suffix is the tail of its address, so two identical
+   ```yaml
+   lights:
+     - address: "AA:BB:CC:DD:EE:01"
+       name: "Office Litra"
+       model: "beam_lx"
+   ```
+
+3. Put the light into pairing mode and (re)start the add-on. It pairs, trusts
+   and connects it once; after that the light reconnects on its own.
+
+The model (Beam LX / Beam / Glow) is detected automatically when `model` is left
+out. Lights that are already bonded but not listed are exposed too, named like
+`Litra Beam LX (EE01)` (the suffix is the tail of the address, so two identical
 models don't clash). Rename them in Home Assistant to taste.
 
-> After the first run the lights are bonded, so you can leave them out of pairing
-> mode; the add-on finds them via the existing bond on every start.
+### Pairing discovered lights automatically (opt-in)
 
-## Setup — pinning specific lights (optional)
+With `auto_discover` **and** `pair_discovered` on, the add-on pairs and trusts
+every device that advertises a name starting with "Litra", as versions before
+0.5.0 did. Devices that announce themselves as a keyboard or mouse are refused,
+but a device can lie about that. Only use it where no stranger is in Bluetooth
+range, and turn it off again after the first pairing.
 
-Use the `lights` list only if you want fixed names/models, or want to control
-exactly which lights are exposed. Listed lights keep your name/model; any *other*
-bonded Litras are still auto-added unless you turn `auto_discover` off.
+### Upgrading from 0.4.x
 
-```yaml
-auto_discover: false        # only bridge the lights listed below
-lights:
-  - address: "FE:FA:09:E1:ED:F4"
-    name: "Office Litra"
-    model: "beam_lx"
-  - address: "C1:AB:00:11:22:33"
-    name: "Desk Litra"
-    model: "beam_lx"
-```
+Lights that are already paired keep working without any change. To pair a new
+light, list its address as above.
 
 Option reference:
 
 | Option | Meaning |
 |---|---|
-| `auto_discover` | Scan for and pair any Litra in range, then expose all bonded ones. Default `true`. |
-| `lights[].address` | A light's Bluetooth MAC. Optional when auto-discovering. |
+| `lights[].address` | A light's Bluetooth MAC, `AA:BB:CC:DD:EE:FF`. Only listed addresses are paired. |
 | `lights[].name` | Friendly name shown in Home Assistant. |
 | `lights[].model` | `beam_lx` (front + back RGB), `beam` or `glow` (front only). |
-| `pair_on_start` | Pair/trust configured addresses on startup. Leave `true`. |
+| `auto_discover` | Scan for advertising Litras and log their addresses. Pairs nothing by itself. Default `false`. |
+| `pair_discovered` | Also pair and trust what `auto_discover` found. Default `false`. |
+| `pair_on_start` | Pair/trust the listed addresses on startup. Leave `true`. |
 | `state_readback` | Poll the device for real state (also catches the physical buttons) at the cost of extra Bluetooth traffic. |
 | `scan_seconds` | How long to scan for lights. |
 | `presence_interval` | Seconds between availability checks. |
@@ -77,12 +83,10 @@ Option reference:
 Start the add-on and watch the log. You're looking for:
 
 ```
-scanning for Litra lights...
-discovered: Litra Beam LX
 pairing 1 light(s)...
-bridging 1 light(s): Litra Beam LX (EDF4)
+bridging 1 light(s): Office Litra
 connected to MQTT broker
-published discovery for Litra Beam LX (EDF4) (front+back)
+published discovery for Office Litra (front+back)
 ```
 
 Each light then appears in **Settings → Devices & Services → MQTT** as a device
@@ -100,8 +104,10 @@ dashboards, or voice ("turn on the Office Litra").
 
 ## Troubleshooting
 
-- **A light won't pair:** make sure it's in pairing mode (blinking) and in range
-  the first time you start the add-on. Increase `scan_seconds`. Check the log
+- **A light won't pair:** make sure its address is listed in `lights`, and that
+  it's in pairing mode (blinking) and in range the first time you start the
+  add-on. Increase `scan_seconds`. A log line *not pairing … discovered
+  device(s)* means the light was seen but isn't listed. Check the log
   with `log_level: debug` for the `bluetoothctl` transcript.
 - **Entity shows "unavailable":** the light is asleep/out of range, or the bond
   dropped. It returns automatically when the light reconnects.

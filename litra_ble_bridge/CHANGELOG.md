@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0
+
+- Security: only lights listed in `lights` are paired and trusted. Before, the
+  add-on paired every device in range that advertised as "Litra…", and a
+  trusted Bluetooth HID device can type on the host.
+- `auto_discover` is now off by default and only logs the addresses it finds.
+  The new option `pair_discovered` (off) pairs them anyway; devices that
+  announce themselves as a keyboard or mouse are still refused.
+- Light addresses are checked against the MAC format when the options are
+  saved and when the add-on loads them.
+- **Upgrade:** lights that are already paired keep working. To pair a new one,
+  add its address to `lights` (turn on `auto_discover` once to see it in the
+  log), or turn on `pair_discovered`.
+
 ## 0.4.2
 
 - Protection mode can stay on. `full_access` is replaced by a per-device grant

@@ -4,12 +4,13 @@
 
 Steuert Logitech-Litra-Lampen (Beam, Beam LX, Glow) aus Home Assistant per **Bluetooth**, ohne Logitech-Software und ohne Cloud. Jede Lampe erscheint über MQTT-Discovery als normales Licht in Home Assistant.
 
-Das ist der studio-prisma-Fork von [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). Er unterscheidet sich in vier Punkten:
+Das ist der studio-prisma-Fork von [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-mqtt). Er unterscheidet sich in fünf Punkten:
 
 - **Eine normale Litra Beam funktioniert per Bluetooth.** Das Original kannte nur ihre USB-Kennung. Die Lampe wurde deshalb nicht gefunden oder bekam die Befehle der Beam LX.
 - **Die Farbtemperatur funktioniert.** Werte werden auf 100 K gerundet, andere ignoriert die Lampe.
 - **Der Schutzmodus bleibt an.** Der Zugriff auf die HID-Geräte wird gezielt pro Gerät freigegeben statt über vollen Gerätezugriff.
 - **Das Image wird aus diesem Repository gebaut.** Beim Build wird außer einer festgelegten Abhängigkeit nichts nachgeladen, und Bluetooth-Adressen werden geprüft, bevor sie `bluetoothctl` erreichen.
+- **Nichts wird nur wegen seines Namens gekoppelt.** Gekoppelt und als vertrauenswürdig markiert werden nur Lampen, deren Adresse eingetragen ist. Das Original koppelte jedes Gerät in Reichweite, das sich als `Litra…` meldete, und ein vertrauenswürdiges Bluetooth-HID-Gerät kann auf dem Host tippen.
 
 ## Voraussetzungen
 
@@ -23,8 +24,9 @@ Das ist der studio-prisma-Fork von [Alevale/litra-ble-mqtt](https://github.com/A
    `https://github.com/studio-prisma/homeassistant-addon-litra-ble`.
 2. **Litra Bluetooth Bridge** installieren. Den Schutzmodus anlassen.
 3. Die Lampe an allen anderen Geräten entkoppeln (Laptop, Handy). Eine Litra hält immer nur eine Bluetooth-Verbindung.
-4. Die Bluetooth-Taste auf der Rückseite gedrückt halten, bis die Lampe blinkt.
-5. Das Add-on starten. Es sucht 20 Sekunden lang, koppelt die Lampe und meldet sie an Home Assistant.
+4. Die Bluetooth-Adresse der Lampe in der Add-on-Konfiguration unter `lights` eintragen. Wer sie nicht kennt, schaltet `auto_discover` ein, versetzt die Lampe in den Kopplungsmodus und startet das Add-on einmal: Das Log zeigt die Adresse jeder gefundenen Litra.
+5. Die Bluetooth-Taste auf der Rückseite gedrückt halten, bis die Lampe blinkt.
+6. Das Add-on starten. Es koppelt die eingetragene Lampe und meldet sie an Home Assistant.
 
 Die Lampe erscheint als `light.litra_beam_<kürzel>_front` (bei der Beam LX zusätzlich `_back`). Nach der ersten Kopplung verbindet sie sich von selbst neu.
 
@@ -32,9 +34,10 @@ Die Lampe erscheint als `light.litra_beam_<kürzel>_front` (bei der Beam LX zus�
 
 | Option | Standard | Bedeutung |
 |---|---|---|
-| `auto_discover` | `true` | Beim Start jedes Gerät in der Nähe koppeln, das sich als `Litra…` meldet. |
-| `lights` | `[]` | Adressen, Namen oder Modelle fest vorgeben statt automatischer Suche. |
-| `pair_on_start` | `true` | Konfigurierte oder gefundene Lampen beim Start koppeln und als vertrauenswürdig markieren. |
+| `lights` | `[]` | Adressen (und optional Namen, Modelle) der zu koppelnden Lampen. Nur diese werden gekoppelt. |
+| `auto_discover` | `false` | Nach Litras im Kopplungsmodus suchen und ihre Adressen ins Log schreiben. Koppelt selbst nichts. |
+| `pair_discovered` | `false` | Zusätzlich jedes gefundene `Litra…`-Gerät koppeln und als vertrauenswürdig markieren (Verhalten vor 0.5.0). Tastaturen und Mäuse werden abgelehnt. |
+| `pair_on_start` | `true` | Die eingetragenen Lampen beim Start koppeln und als vertrauenswürdig markieren. |
 | `state_readback` | `false` | Den echten Zustand der Lampe zurücklesen. Aus heißt: Home Assistant zeigt den zuletzt gesendeten Befehl. |
 | `scan_seconds` | `20` | Wie lange nach Lampen im Kopplungsmodus gesucht wird. |
 | `presence_interval` | `5` | Sekunden zwischen den Verfügbarkeitsprüfungen. |
