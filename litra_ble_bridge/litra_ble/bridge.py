@@ -315,10 +315,12 @@ class Bridge:
     def _resolve_light_cfgs(self) -> list[LightCfg]:
         """Determine which lights to bridge: configured + auto-discovered.
 
-        Auto-discovery scans BLE for advertising "Litra" devices, pairs anything
-        new, then enumerates every bonded Litra (model detected from its product
-        id). Explicit configured lights keep their name/model and are always
-        included (even if currently absent, so they show up as unavailable).
+        Only configured addresses are paired by default. Auto-discovery scans
+        BLE for advertising "Litra" devices and logs their addresses; it pairs
+        them only with ``pair_discovered`` on. Then every bonded Litra is
+        enumerated (model detected from its product id). Explicit configured
+        lights keep their name/model and are always included (even if
+        currently absent, so they show up as unavailable).
         """
         configured = {self._norm(lc.address): lc
                       for lc in self.cfg.lights if lc.address}
@@ -329,13 +331,16 @@ class Bridge:
             for addr, name in pairing.scan_for_litras(self.cfg.scan_seconds):
                 discovered[self._norm(addr)] = (addr, name)
             if discovered:
-                log.info("discovered: %s",
-                         ", ".join(n for _, n in discovered.values()))
+                log.info("discovered: %s", ", ".join(
+                    f"{n} [{a}]" for a, n in discovered.values()))
 
-        to_pair = [lc.address for lc in configured.values()]
-        to_pair += [addr for na, (addr, _) in discovered.items()
-                    if na not in configured]
-        if (self.cfg.pair_on_start or self.cfg.auto_discover) and to_pair:
+        to_pair = pairing.select_pair_targets(
+            [lc.address for lc in configured.values()],
+            [addr for na, (addr, _) in discovered.items() if na not in configured],
+            pair_on_start=self.cfg.pair_on_start,
+            pair_discovered=self.cfg.pair_discovered,
+        )
+        if to_pair:
             log.info("pairing %d light(s)...", len(to_pair))
             pairing.ensure_paired(to_pair, scan_seconds=self.cfg.scan_seconds)
             # The kernel hidraw node can lag a few seconds behind the bond/
@@ -381,8 +386,10 @@ class Bridge:
             for lc in self._resolve_light_cfgs()
         ]
         if not self.lights:
-            log.error("no lights found. Put a Litra in pairing mode and restart, "
-                      "or set addresses in the configuration.")
+            log.error("no lights found. Add each light's Bluetooth address to "
+                      "'lights' (turn on 'auto_discover' to have the add-on "
+                      "log the addresses it sees), put the light in pairing "
+                      "mode and restart.")
             return
         log.info("bridging %d light(s): %s", len(self.lights),
                  ", ".join(lb.dev.name for lb in self.lights))
@@ -421,10 +428,8 @@ def main() -> int:
         level=getattr(logging, cfg.log_level, logging.INFO),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    if not cfg.lights and not cfg.auto_discover:
-        log.error("no lights configured and auto-discovery is off; "
-                  "set options.lights or enable auto_discover")
-        return 1
+    # No early exit without configured lights: lights bonded by an earlier
+    # version are still picked up from their hidraw nodes in run().
     Bridge(cfg).run()
     return 0
 

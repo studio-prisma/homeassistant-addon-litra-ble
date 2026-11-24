@@ -20,6 +20,7 @@ import urllib.request
 from dataclasses import dataclass, field
 
 from litra_ble.device import DEFAULT_MODEL, PROFILES, list_litras
+from litra_ble.pairing import valid_address
 
 log = logging.getLogger("litra-mqtt.config")
 
@@ -49,8 +50,14 @@ class Config:
     lights: list[LightCfg] = field(default_factory=list)
     state_readback: bool = False
     presence_interval: float = 5.0
+    # Pair/trust the addresses listed in `lights`. Never touches anything else.
     pair_on_start: bool = True
-    auto_discover: bool = True
+    # Scan for advertising Litras and log their addresses. Pairs nothing by
+    # itself: a device in range can claim any name.
+    auto_discover: bool = False
+    # Also pair + trust what auto_discover found. Off by default because a
+    # trusted Bluetooth HID device can type on the host's console.
+    pair_discovered: bool = False
     scan_seconds: float = 20.0
     log_level: str = "INFO"
 
@@ -78,7 +85,8 @@ def _from_addon(options: dict) -> Config:
     cfg.presence_interval = float(options.get("presence_interval", 5))
     cfg.scan_seconds = float(options.get("scan_seconds", 20))
     cfg.pair_on_start = bool(options.get("pair_on_start", True))
-    cfg.auto_discover = bool(options.get("auto_discover", True))
+    cfg.auto_discover = bool(options.get("auto_discover", False))
+    cfg.pair_discovered = bool(options.get("pair_discovered", False))
     cfg.log_level = (options.get("log_level") or "info").upper()
 
     cfg.lights = []
@@ -91,6 +99,11 @@ def _from_addon(options: dict) -> Config:
             log.warning("ignoring a light with no 'address' set - fill in its "
                         "Bluetooth MAC in the add-on configuration")
             continue
+        if not valid_address(addr):
+            log.error("ignoring light %r: 'address' must be a Bluetooth MAC "
+                      "like AA:BB:CC:DD:EE:FF", addr)
+            continue
+        addr = addr.upper()
         cfg.lights.append(LightCfg(
             address=addr,
             name=light.get("name") or f"Litra {addr}",
@@ -144,6 +157,7 @@ def _from_env() -> Config:
         presence_interval=float(env("LITRA_PRESENCE_INTERVAL", "5")),
         pair_on_start=env("LITRA_PAIR_ON_START", "0") == "1",
         auto_discover=env("LITRA_AUTO_DISCOVER", "0") == "1",
+        pair_discovered=env("LITRA_PAIR_DISCOVERED", "0") == "1",
         scan_seconds=float(env("LITRA_SCAN_SECONDS", "20")),
         log_level=env("LITRA_LOG_LEVEL", "INFO").upper(),
     )
@@ -163,6 +177,17 @@ def _from_env() -> Config:
         ).normalized()]
     else:
         cfg.lights = _autodiscover_lights()
+
+    # An empty address means "the first Litra present" in standalone mode; a
+    # set one must be a MAC, it ends up on bluetoothctl's stdin when pairing.
+    valid = []
+    for light in cfg.lights:
+        if light.address and not valid_address(light.address):
+            log.error("ignoring light %r: address must be a Bluetooth MAC "
+                      "like AA:BB:CC:DD:EE:FF", light.address)
+            continue
+        valid.append(light)
+    cfg.lights = valid
     return cfg
 
 

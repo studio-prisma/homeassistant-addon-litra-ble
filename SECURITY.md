@@ -6,7 +6,7 @@ Only the latest minor release receives security fixes.
 
 | Version | Supported |
 |---|---|
-| `0.4.x` | yes |
+| `0.5.x` | yes |
 | everything older | no |
 
 ## Reporting a Vulnerability
@@ -34,7 +34,8 @@ Knowing the surface helps decide whether something is a finding:
 
 - text reaching the interactive `bluetoothctl` session that is not a validated MAC address (command injection into BlueZ)
 - MQTT payloads that crash the bridge or make it write HID reports other than the documented power, brightness, temperature and colour commands
-- auto-discovery pairing a device whose advertised name does not start with `Litra`
+- pairing or trusting a device whose address is not listed in `lights` while `pair_discovered` is off
+- with `pair_discovered` on: pairing a device whose advertised name does not start with `Litra`, or one that announces itself as a keyboard or mouse
 - the image build fetching code that is not in this repository, other than the pinned `paho-mqtt`
 - MQTT credentials leaking into logs
 
@@ -44,7 +45,7 @@ Documented design decisions are not findings.
 
 - **Bluetooth security of the light itself.** Pairing uses `NoInputNoOutput` (Just Works); the light offers nothing stronger.
 - **Anyone who can publish to the MQTT command topics can switch the light.** Access control belongs to the broker.
-- **Auto-discovery pairs any nearby device that advertises as `Litra…` while the add-on starts.** Turn `auto_discover` off and list addresses if that matters in your environment.
+- **With `pair_discovered` on, a device in radio range that advertises as `Litra…` and lies about being a light gets paired and trusted.** The option is off by default and documented as unsafe where strangers are in range. A listed address that a nearby device spoofs is likewise out of scope: BLE offers no stronger identity for Just Works pairing.
 - other HID devices on `hidraw0`–`3` being reachable by the add-on (see above)
 - issues in Home Assistant, the Supervisor or BlueZ: report those upstream
 - anything that requires an already-compromised host or admin account

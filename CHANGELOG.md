@@ -7,6 +7,29 @@ original project, [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-24
+
+### Security
+
+- The add-on no longer pairs and trusts devices it did not get an address for.
+  `auto_discover` is off by default and, when on, only logs the addresses of
+  the Litras it sees. Before, it paired and trusted every device in radio range
+  that advertised a name starting with "Litra"; a trusted Bluetooth HID device
+  can type on the host's console.
+- New option `pair_discovered` (off) restores the old behaviour on purpose. Even
+  then, a device that announces itself as a keyboard or mouse is not paired.
+- Light addresses are validated as MAC addresses when the options are loaded
+  (schema and bridge), not only right before pairing.
+
+### Changed
+
+- Upgrade note: if you relied on auto-discovery to pair new lights, add their
+  addresses to `lights` (turn on `auto_discover` once to see them in the log),
+  or turn on `pair_discovered`. Lights that are already paired keep working
+  without any change.
+- Without configured lights the bridge no longer exits; it still exposes every
+  Litra that is already bonded.
+
 ## [0.4.2] - 2026-11-01
 
 ### Changed
@@ -50,7 +73,8 @@ First release of the studio-prisma fork, based on 0.3.2.
 - A plain Beam over Bluetooth was either not found at all or driven with the
   Beam LX feature index, so commands had no effect.
 
-[Unreleased]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/releases/tag/v0.4.2
 [0.4.1]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/commit/447028a
 [0.4.0]: https://github.com/studio-prisma/homeassistant-addon-litra-ble/compare/8f5f9a0...c20fc12

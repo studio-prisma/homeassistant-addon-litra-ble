@@ -69,6 +69,62 @@ def power_on() -> None:
     _oneshot("power", "on")
 
 
+# BLE appearance values and BlueZ icons that announce a keyboard or a mouse.
+# A Litra is a HID-over-GATT device too, so the HID service itself can't be
+# used to tell them apart; what it advertises as can. This is a plausibility
+# check on what the device claims, not proof: a device that lies about its
+# appearance passes. The real protection is that discovered devices are only
+# paired when the user opts in (``pair_discovered``).
+_INPUT_APPEARANCES = {0x03C1, 0x03C2}          # keyboard, mouse
+_INPUT_ICONS = {"input-keyboard", "input-mouse", "input-tablet"}
+
+
+def announces_input_device(address: str) -> bool:
+    """True if BlueZ reports the device as a keyboard/mouse (refuse to pair)."""
+    for line in _oneshot("info", address).splitlines():
+        key, _, value = line.strip().partition(":")
+        value = value.strip().lower()
+        if key == "Icon" and value in _INPUT_ICONS:
+            return True
+        if key == "Appearance":
+            try:
+                if int(value.split()[0], 16) in _INPUT_APPEARANCES:
+                    return True
+            except (ValueError, IndexError):
+                continue
+    return False
+
+
+def select_pair_targets(configured: list[str], discovered: list[str], *,
+                        pair_on_start: bool, pair_discovered: bool,
+                        is_input_device=None) -> list[str]:
+    """Return the addresses that may be paired + trusted on this start.
+
+    Configured addresses are the user's explicit choice. Discovered ones only
+    carry an advertised name, which anyone in radio range can set, so they are
+    paired only when the user opted in, and never when they announce
+    themselves as a keyboard or mouse.
+    """
+    is_input_device = is_input_device or announces_input_device
+    targets = [a for a in configured if valid_address(a)] if pair_on_start else []
+    if not discovered:
+        return targets
+    if not pair_discovered:
+        log.info("not pairing %d discovered device(s); add the address to "
+                 "'lights' or turn on 'pair_discovered': %s",
+                 len(discovered), ", ".join(discovered))
+        return targets
+    for addr in discovered:
+        if not valid_address(addr):
+            continue
+        if is_input_device(addr):
+            log.warning("not pairing %s: it announces itself as a keyboard or "
+                        "mouse, not as a light", addr)
+            continue
+        targets.append(addr)
+    return targets
+
+
 class _Session:
     """A short-lived interactive bluetoothctl session.
 
