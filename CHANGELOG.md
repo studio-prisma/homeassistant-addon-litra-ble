@@ -7,6 +7,11 @@ original project, [Alevale/litra-ble-mqtt](https://github.com/Alevale/litra-ble-
 
 ## [Unreleased]
 
+### Changed
+
+- CI: all GitHub actions pinned to commit SHAs instead of tags; actionlint runs from the shared
+  action in `github-config-security-workflow` with checksum check (security workflow v1.2.0).
+
 ## [0.5.0] - 2026-11-24
 
 ### Security
